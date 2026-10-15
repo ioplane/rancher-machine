@@ -15,6 +15,11 @@ inputs provided by other things like Terraform or UIs.
 
 Cli binaries can be found in our [Releases Pages](https://github.com/rancher/machine/releases)
 
+## Fork contribution language
+
+Pull request titles and descriptions and all new commit messages use English.
+Commit titles follow Conventional Commits with declarative noun phrases.
+
 ## Issues
 
 For historical context you can read the [Docker Machine Issues](https://github.com/docker/machine/issues)
