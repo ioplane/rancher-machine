@@ -63,7 +63,7 @@ jobs:
         run: |
           set -euo pipefail
           make dev-build lint-build
-          make fork-check
+          make check
 
   status:
     needs: check

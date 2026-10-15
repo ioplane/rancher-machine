@@ -81,7 +81,7 @@ Subsequent tags from that branch would be `v0.15.0-rancher142.3`, `v0.15.0-ranch
 ## Fork quality checks
 
 In `ioplane/rancher-machine`, `.github/workflows/fork-blacksmith.yml` runs the
-candidate's `make dev-build lint-build` and `make fork-check` on Blacksmith using
+candidate's `make dev-build lint-build` and `make check` on Blacksmith using
 rootless Podman. The candidate must declare these targets; missing targets fail
 the check. `pull_request_target` accepts only open pull requests whose head and
 base repositories are this fork. Manual dispatch requires a pull request number.
