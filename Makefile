@@ -71,3 +71,40 @@ push-prime-image:
 .DEFAULT_GOAL := ci
 
 .PHONY: $(SCRIPT_TARGETS)
+
+# Local and CI quality checks share the pinned Podman environment.
+PODMAN ?= podman
+DEV_IMAGE ?= localhost/ioplane-rancher-machine:dev
+LINT_IMAGE ?= localhost/ioplane-rancher-machine:lint
+GIT_COMMON_DIR := $(shell git rev-parse --path-format=absolute --git-common-dir)
+GIT_DIR := $(shell git rev-parse --absolute-git-dir)
+DEV_RUN = $(PODMAN) run --rm -v "$(CURDIR):/src:z" -w /src \
+	-v ioplane-rancher-machine-go-modules:/cache/modules -v ioplane-rancher-machine-go-build:/cache/build
+GIT_MOUNTS = -v "$(GIT_COMMON_DIR):$(GIT_COMMON_DIR):ro,z" $(if $(filter-out $(GIT_COMMON_DIR),$(GIT_DIR)),-v "$(GIT_DIR):$(GIT_DIR):ro") \
+	--env GIT_DIR=$(GIT_DIR) --env GIT_WORK_TREE=/src
+NEW_GO = commands/create_recovery_test.go libmachine/drivers/create_recovery.go \
+	libmachine/drivers/rpc/create_recovery.go libmachine/drivers/rpc/create_recovery_test.go \
+	libmachine/crashreport/crash_report_logger_test.go
+.PHONY: dev-build lint-build check check-test check-vet check-build check-lint check-format check-mod check-vuln
+
+dev-build:
+	$(PODMAN) build --target dev --build-arg SOURCE_REVISION=$(shell git rev-parse HEAD) \
+		--build-arg BUILD_CREATED=$(shell date -u +%Y-%m-%dT%H:%M:%SZ) -t $(DEV_IMAGE) -f Containerfile.dev .
+lint-build:
+	$(PODMAN) build --target lint --build-arg SOURCE_REVISION=$(shell git rev-parse HEAD) \
+		--build-arg BUILD_CREATED=$(shell date -u +%Y-%m-%dT%H:%M:%SZ) -t $(LINT_IMAGE) -f Containerfile.dev .
+check-test:
+	$(DEV_RUN) $(DEV_IMAGE) go test -race -shuffle=on -covermode=atomic -timeout=5m -run "TestCreateRecoveryUsesCurrentHost|TestExistingUnsupportedHostKeepsOriginalError|TestExistingUserdataHostKeepsOriginalError|TestPrepareCreateRecoveryRPC|TestLoggerPrintfForwardsArguments" ./commands ./libmachine/drivers/rpc ./libmachine/crashreport
+check-vet:
+	$(DEV_RUN) $(DEV_IMAGE) go vet ./...
+check-build:
+	$(DEV_RUN) $(DEV_IMAGE) env CGO_ENABLED=0 go build -trimpath -o bin/rancher-machine ./cmd/rancher-machine
+check-lint:
+	$(DEV_RUN) $(GIT_MOUNTS) $(LINT_IMAGE) golangci-lint run ./...
+check-format:
+	$(DEV_RUN) $(LINT_IMAGE) golangci-lint fmt --diff $(NEW_GO)
+check-mod:
+	$(DEV_RUN) $(DEV_IMAGE) sh -ec 'cp go.mod /tmp/go.mod; cp go.sum /tmp/go.sum; GOFLAGS=-buildvcs=false go mod tidy; cmp /tmp/go.mod go.mod; cmp /tmp/go.sum go.sum; go mod verify'
+check-vuln:
+	$(DEV_RUN) $(DEV_IMAGE) go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
+check: check-mod check-test check-vet check-build check-lint check-format check-vuln

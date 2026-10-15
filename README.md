@@ -5,6 +5,8 @@ inside your own data center. It creates servers, installs Docker on them, then
 configures the Docker client to talk to them.
 
 ## Installation and documentation
+Fork development and recovery boundaries: [Create recovery](docs/ru/create-recovery.md).
+
 The original full Docker Machine documentation [is available here](https://gcbw.github.io/docker.github.io/machine/).
 
 This project is intended to be embedded and executed by the full [Rancher](https://github.com/rancher/rancher) product

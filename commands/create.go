@@ -219,12 +219,6 @@ func cmdCreate(c CommandLine, api libmachine.API) error {
 	if err != nil {
 		return fmt.Errorf("error checking if host exists: %s", err)
 	}
-	if exists {
-		return mcnerror.ErrHostAlreadyExists{
-			Name: h.Name,
-		}
-	}
-
 	// driverOpts is the actual data we send over the wire to set the
 	// driver parameters (an interface fulfilling drivers.DriverOptions,
 	// concrete type rpcdriver.RpcFlags).
@@ -234,6 +228,19 @@ func cmdCreate(c CommandLine, api libmachine.API) error {
 	osFlag := drivers.DriverOSFlag(h.Driver)
 
 	customInstallScript := c.String("custom-install-script")
+	recovering := false
+	if recovery, ok := h.Driver.(drivers.CreateRecoveryDriver); ok && customInstallScript != "" && userdataFlag == "" {
+		recovering, err = recovery.PrepareCreateRecovery(driverOpts, drivers.CreateRecoveryContext{
+			Existing: exists, CustomInstallScriptPath: customInstallScript,
+			HostnameOverride: c.String("hostname-override"),
+		})
+		if err != nil {
+			return fmt.Errorf("error preparing create recovery: %w", err)
+		}
+	}
+	if exists && !recovering {
+		return mcnerror.ErrHostAlreadyExists{Name: h.Name}
+	}
 	h.HostOptions.HostnameOverride = c.String("hostname-override")
 	if customInstallScript != "" {
 		h.HostOptions.CustomInstallScript = customInstallScript
@@ -249,8 +256,10 @@ func cmdCreate(c CommandLine, api libmachine.API) error {
 		}
 	}
 
-	if err := h.Driver.SetConfigFromFlags(driverOpts); err != nil {
-		return fmt.Errorf("error setting machine configuration from flags provided: %s", err)
+	if !recovering {
+		if err := h.Driver.SetConfigFromFlags(driverOpts); err != nil {
+			return fmt.Errorf("error setting machine configuration from flags provided: %s", err)
+		}
 	}
 
 	if err := api.Create(h); err != nil {

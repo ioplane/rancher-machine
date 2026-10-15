@@ -1,0 +1,12 @@
+version: "2"
+run:
+  timeout: 10m
+  modules-download-mode: readonly
+linters:
+  default: standard
+formatters:
+  enable: [gofumpt, goimports]
+issues:
+  new-from-rev: 407bfdc12e6fdfd19c9d76d565d552ea5b39f363
+  max-issues-per-linter: 0
+  max-same-issues: 0
