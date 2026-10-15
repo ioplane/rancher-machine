@@ -102,7 +102,8 @@ check-build:
 check-lint:
 	$(DEV_RUN) $(GIT_MOUNTS) $(LINT_IMAGE) golangci-lint run ./...
 check-format:
-	$(DEV_RUN) $(LINT_IMAGE) golangci-lint fmt --diff $(NEW_GO)
+	$(DEV_RUN) $(LINT_IMAGE) sh -c 'golangci-lint fmt --diff $(NEW_GO) > /tmp/format.patch; status=$$?; cat /tmp/format.patch; test "$$status" -eq 0 && test ! -s /tmp/format.patch'
+	$(DEV_RUN) $(DEV_IMAGE) sh -ec 'gofmt -l commands/create.go libmachine/drivers/rpc/client_driver.go libmachine/crashreport/crash_report_logger.go > /tmp/gofmt-files; cat /tmp/gofmt-files; test ! -s /tmp/gofmt-files'
 check-mod:
 	$(DEV_RUN) $(DEV_IMAGE) sh -ec 'cp go.mod /tmp/go.mod; cp go.sum /tmp/go.sum; GOFLAGS=-buildvcs=false go mod tidy; cmp /tmp/go.mod go.mod; cmp /tmp/go.sum go.sum; go mod verify'
 check-vuln:
