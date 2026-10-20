@@ -1,0 +1,13 @@
+name: rancher-machine
+services:
+  dev:
+    build:
+      context: .
+      dockerfile: Containerfile.dev
+      target: dev
+    image: localhost/ioplane-rancher-machine:dev
+    working_dir: /src
+    volumes:
+      - .:/src:z
+    profiles: [dev]
+    command: [bash]

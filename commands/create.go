@@ -30,119 +30,115 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-var (
-	errNoMachineName = errors.New("error: No machine name specified")
-)
+var errNoMachineName = errors.New("error: No machine name specified")
 
-var (
-	SharedCreateFlags = []cli.Flag{
-		cli.StringFlag{
-			Name:   "driver, d",
-			Usage:  "Driver to create machine with.",
-			Value:  "virtualbox",
-			EnvVar: "MACHINE_DRIVER",
-		},
-		cli.StringFlag{
-			Name:   "engine-install-url",
-			Usage:  "Custom URL to use for engine installation",
-			Value:  drivers.DefaultEngineInstallURL,
-			EnvVar: "MACHINE_DOCKER_INSTALL_URL",
-		},
-		cli.StringSliceFlag{
-			Name:  "engine-opt",
-			Usage: "Specify arbitrary flags to include with the created engine in the form flag=value",
-			Value: &cli.StringSlice{},
-		},
-		cli.StringSliceFlag{
-			Name:  "engine-insecure-registry",
-			Usage: "Specify insecure registries to allow with the created engine",
-			Value: &cli.StringSlice{},
-		},
-		cli.StringSliceFlag{
-			Name:   "engine-registry-mirror",
-			Usage:  "Specify registry mirrors to use",
-			Value:  &cli.StringSlice{},
-			EnvVar: "ENGINE_REGISTRY_MIRROR",
-		},
-		cli.StringSliceFlag{
-			Name:  "engine-label",
-			Usage: "Specify labels for the created engine",
-			Value: &cli.StringSlice{},
-		},
-		cli.StringFlag{
-			Name:  "engine-storage-driver",
-			Usage: "Specify a storage driver to use with the engine",
-		},
-		cli.StringSliceFlag{
-			Name:  "engine-env",
-			Usage: "Specify environment variables to set in the engine",
-			Value: &cli.StringSlice{},
-		},
-		cli.BoolFlag{
-			Name:  "swarm",
-			Usage: "Configure Machine to join a Swarm cluster",
-		},
-		cli.StringFlag{
-			Name:   "swarm-image",
-			Usage:  "Specify Docker image to use for Swarm",
-			Value:  "swarm:latest",
-			EnvVar: "MACHINE_SWARM_IMAGE",
-		},
-		cli.BoolFlag{
-			Name:  "swarm-master",
-			Usage: "Configure Machine to be a Swarm master",
-		},
-		cli.StringFlag{
-			Name:  "swarm-discovery",
-			Usage: "Discovery service to use with Swarm",
-			Value: "",
-		},
-		cli.StringFlag{
-			Name:  "swarm-strategy",
-			Usage: "Define a default scheduling strategy for Swarm",
-			Value: "spread",
-		},
-		cli.StringSliceFlag{
-			Name:  "swarm-opt",
-			Usage: "Define arbitrary flags for Swarm master",
-			Value: &cli.StringSlice{},
-		},
-		cli.StringSliceFlag{
-			Name:  "swarm-join-opt",
-			Usage: "Define arbitrary flags for Swarm join",
-			Value: &cli.StringSlice{},
-		},
-		cli.StringFlag{
-			Name:  "swarm-host",
-			Usage: "ip/socket to listen on for Swarm master",
-			Value: "tcp://0.0.0.0:3376",
-		},
-		cli.StringFlag{
-			Name:  "swarm-addr",
-			Usage: "addr to advertise for Swarm (default: detect and use the machine IP)",
-			Value: "",
-		},
-		cli.BoolFlag{
-			Name:  "swarm-experimental",
-			Usage: "Enable Swarm experimental features",
-		},
-		cli.StringSliceFlag{
-			Name:  "tls-san",
-			Usage: "Support extra SANs for TLS certs",
-			Value: &cli.StringSlice{},
-		},
-		cli.StringFlag{
-			Name:  "custom-install-script",
-			Usage: "Use a custom provisioning script instead of installing docker",
-			Value: "",
-		},
-		cli.StringFlag{
-			Name:  "hostname-override",
-			Usage: "Specify hostname to use during cloud-init instead of default generated hostname",
-			Value: "",
-		},
-	}
-)
+var SharedCreateFlags = []cli.Flag{
+	cli.StringFlag{
+		Name:   "driver, d",
+		Usage:  "Driver to create machine with.",
+		Value:  "virtualbox",
+		EnvVar: "MACHINE_DRIVER",
+	},
+	cli.StringFlag{
+		Name:   "engine-install-url",
+		Usage:  "Custom URL to use for engine installation",
+		Value:  drivers.DefaultEngineInstallURL,
+		EnvVar: "MACHINE_DOCKER_INSTALL_URL",
+	},
+	cli.StringSliceFlag{
+		Name:  "engine-opt",
+		Usage: "Specify arbitrary flags to include with the created engine in the form flag=value",
+		Value: &cli.StringSlice{},
+	},
+	cli.StringSliceFlag{
+		Name:  "engine-insecure-registry",
+		Usage: "Specify insecure registries to allow with the created engine",
+		Value: &cli.StringSlice{},
+	},
+	cli.StringSliceFlag{
+		Name:   "engine-registry-mirror",
+		Usage:  "Specify registry mirrors to use",
+		Value:  &cli.StringSlice{},
+		EnvVar: "ENGINE_REGISTRY_MIRROR",
+	},
+	cli.StringSliceFlag{
+		Name:  "engine-label",
+		Usage: "Specify labels for the created engine",
+		Value: &cli.StringSlice{},
+	},
+	cli.StringFlag{
+		Name:  "engine-storage-driver",
+		Usage: "Specify a storage driver to use with the engine",
+	},
+	cli.StringSliceFlag{
+		Name:  "engine-env",
+		Usage: "Specify environment variables to set in the engine",
+		Value: &cli.StringSlice{},
+	},
+	cli.BoolFlag{
+		Name:  "swarm",
+		Usage: "Configure Machine to join a Swarm cluster",
+	},
+	cli.StringFlag{
+		Name:   "swarm-image",
+		Usage:  "Specify Docker image to use for Swarm",
+		Value:  "swarm:latest",
+		EnvVar: "MACHINE_SWARM_IMAGE",
+	},
+	cli.BoolFlag{
+		Name:  "swarm-master",
+		Usage: "Configure Machine to be a Swarm master",
+	},
+	cli.StringFlag{
+		Name:  "swarm-discovery",
+		Usage: "Discovery service to use with Swarm",
+		Value: "",
+	},
+	cli.StringFlag{
+		Name:  "swarm-strategy",
+		Usage: "Define a default scheduling strategy for Swarm",
+		Value: "spread",
+	},
+	cli.StringSliceFlag{
+		Name:  "swarm-opt",
+		Usage: "Define arbitrary flags for Swarm master",
+		Value: &cli.StringSlice{},
+	},
+	cli.StringSliceFlag{
+		Name:  "swarm-join-opt",
+		Usage: "Define arbitrary flags for Swarm join",
+		Value: &cli.StringSlice{},
+	},
+	cli.StringFlag{
+		Name:  "swarm-host",
+		Usage: "ip/socket to listen on for Swarm master",
+		Value: "tcp://0.0.0.0:3376",
+	},
+	cli.StringFlag{
+		Name:  "swarm-addr",
+		Usage: "addr to advertise for Swarm (default: detect and use the machine IP)",
+		Value: "",
+	},
+	cli.BoolFlag{
+		Name:  "swarm-experimental",
+		Usage: "Enable Swarm experimental features",
+	},
+	cli.StringSliceFlag{
+		Name:  "tls-san",
+		Usage: "Support extra SANs for TLS certs",
+		Value: &cli.StringSlice{},
+	},
+	cli.StringFlag{
+		Name:  "custom-install-script",
+		Usage: "Use a custom provisioning script instead of installing docker",
+		Value: "",
+	},
+	cli.StringFlag{
+		Name:  "hostname-override",
+		Usage: "Specify hostname to use during cloud-init instead of default generated hostname",
+		Value: "",
+	},
+}
 
 func cmdCreate(c CommandLine, api libmachine.API) error {
 	if len(c.Args()) > 1 {
@@ -219,12 +215,6 @@ func cmdCreate(c CommandLine, api libmachine.API) error {
 	if err != nil {
 		return fmt.Errorf("error checking if host exists: %s", err)
 	}
-	if exists {
-		return mcnerror.ErrHostAlreadyExists{
-			Name: h.Name,
-		}
-	}
-
 	// driverOpts is the actual data we send over the wire to set the
 	// driver parameters (an interface fulfilling drivers.DriverOptions,
 	// concrete type rpcdriver.RpcFlags).
@@ -234,6 +224,19 @@ func cmdCreate(c CommandLine, api libmachine.API) error {
 	osFlag := drivers.DriverOSFlag(h.Driver)
 
 	customInstallScript := c.String("custom-install-script")
+	recovering := false
+	if recovery, ok := h.Driver.(drivers.CreateRecoveryDriver); ok && customInstallScript != "" && userdataFlag == "" {
+		recovering, err = recovery.PrepareCreateRecovery(driverOpts, drivers.CreateRecoveryContext{
+			Existing: exists, CustomInstallScriptPath: customInstallScript,
+			HostnameOverride: c.String("hostname-override"),
+		})
+		if err != nil {
+			return fmt.Errorf("error preparing create recovery: %w", err)
+		}
+	}
+	if exists && !recovering {
+		return mcnerror.ErrHostAlreadyExists{Name: h.Name}
+	}
 	h.HostOptions.HostnameOverride = c.String("hostname-override")
 	if customInstallScript != "" {
 		h.HostOptions.CustomInstallScript = customInstallScript
@@ -249,8 +252,10 @@ func cmdCreate(c CommandLine, api libmachine.API) error {
 		}
 	}
 
-	if err := h.Driver.SetConfigFromFlags(driverOpts); err != nil {
-		return fmt.Errorf("error setting machine configuration from flags provided: %s", err)
+	if !recovering {
+		if err := h.Driver.SetConfigFromFlags(driverOpts); err != nil {
+			return fmt.Errorf("error setting machine configuration from flags provided: %s", err)
+		}
 	}
 
 	if err := api.Create(h); err != nil {

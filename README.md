@@ -5,6 +5,8 @@ inside your own data center. It creates servers, installs Docker on them, then
 configures the Docker client to talk to them.
 
 ## Installation and documentation
+Fork development and recovery boundaries: [Create recovery](docs/ru/create-recovery.md).
+
 The original full Docker Machine documentation [is available here](https://gcbw.github.io/docker.github.io/machine/).
 
 This project is intended to be embedded and executed by the full [Rancher](https://github.com/rancher/rancher) product
@@ -12,6 +14,11 @@ and the stand alone cli functionality will remain but the human use of it will n
 inputs provided by other things like Terraform or UIs.
 
 Cli binaries can be found in our [Releases Pages](https://github.com/rancher/machine/releases)
+
+## Fork contribution language
+
+Pull request titles and descriptions and all new commit messages use English.
+Commit titles follow Conventional Commits with declarative noun phrases.
 
 ## Issues
 
@@ -94,3 +101,8 @@ The inherited Rancher test, release, FOSSA, and Renovate workflows are restricte
 to `rancher/machine`; they do not publish releases or request Rancher credentials
 from this fork. Fork CI activation requires this workflow on the default branch
 and available Blacksmith runners. No production infrastructure is provisioned.
+## Development checks
+
+The pinned Podman lint image provides golangci-lint v2.15.0. `make check-format`
+uses one blocking gofumpt pass for the recovery files and the existing three-file
+formatting scope; `make check-lint` retains the configured changed-code filter.
