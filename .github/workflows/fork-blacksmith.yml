@@ -1,0 +1,100 @@
+name: Fork Blacksmith quality
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened, edited]
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: Same-repository pull request number
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: fork-blacksmith-${{ github.event.pull_request.number || inputs.pr }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    if: github.repository == 'ioplane/rancher-machine' && (github.event_name != 'pull_request_target' || github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    timeout-minutes: 60
+    outputs:
+      head_sha: ${{ steps.resolve.outputs.head_sha }}
+    steps:
+      - name: Resolve exact same-repository PR candidate
+        id: resolve
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr }}
+          EVENT_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$PR_NUMBER" =~ ^[1-9][0-9]*$ ]]
+          gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER" > "$RUNNER_TEMP/candidate.json"
+          jq -e '.state == "open" and .head.repo.full_name == env.GITHUB_REPOSITORY and .base.repo.full_name == env.GITHUB_REPOSITORY' "$RUNNER_TEMP/candidate.json"
+          candidate_sha=$(jq -r '.head.sha' "$RUNNER_TEMP/candidate.json")
+          [[ "$candidate_sha" =~ ^[0-9a-f]{40}$ ]]
+          test -z "$EVENT_HEAD_SHA" || test "$candidate_sha" = "$EVENT_HEAD_SHA"
+          printf 'head_sha=%s\n' "$candidate_sha" >> "$GITHUB_OUTPUT"
+      - name: Checkout candidate without credentials
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ steps.resolve.outputs.head_sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify candidate and rootless Podman
+        env:
+          CANDIDATE_SHA: ${{ steps.resolve.outputs.head_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$CANDIDATE_SHA"
+          test "$(id -u)" -ne 0
+          podman --version
+          test "$(podman info --format '{{.Host.Security.Rootless}}')" = true
+      # No secrets, environments, shared caches, or write permissions in this job.
+      - name: Run declared Podman quality gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          make dev-build lint-build
+          make check
+
+  status:
+    needs: check
+    if: always() && needs.check.outputs.head_sha != ''
+    runs-on: blacksmith-2vcpu-ubuntu-2404
+    timeout-minutes: 5
+    permissions:
+      pull-requests: read
+      statuses: write
+    steps:
+      - name: Report result without checking out PR code
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr }}
+          CANDIDATE_SHA: ${{ needs.check.outputs.head_sha }}
+          EVENT_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          CHECK_RESULT: ${{ needs.check.result }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$PR_NUMBER" =~ ^[1-9][0-9]*$ ]]
+          [[ "$CANDIDATE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          test -z "$EVENT_HEAD_SHA" || test "$CANDIDATE_SHA" = "$EVENT_HEAD_SHA"
+          gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER" > "$RUNNER_TEMP/candidate.json"
+          jq -e '.state == "open" and .head.repo.full_name == env.GITHUB_REPOSITORY and .base.repo.full_name == env.GITHUB_REPOSITORY and .head.sha == env.CANDIDATE_SHA' "$RUNNER_TEMP/candidate.json"
+          status=error
+          if test "$CHECK_RESULT" = success; then status=success; fi
+          if test "$CHECK_RESULT" = failure; then status=failure; fi
+          gh api --method POST "repos/$GITHUB_REPOSITORY/statuses/$CANDIDATE_SHA" \
+            -f state="$status" -f context='Blacksmith / fork quality' \
+            -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            -f description='Declared Podman gates on exact same-repository PR candidate' \
+            --jq '{state,context,sha,target_url}'

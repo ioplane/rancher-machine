@@ -9,6 +9,7 @@ on:
 
 jobs:
   fossa:
+    if: github.repository == 'rancher/machine'
     runs-on: ubuntu-latest
     permissions:
       contents: read

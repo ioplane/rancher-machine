@@ -85,6 +85,22 @@ Subsequent tags from that branch would be `v0.15.0-rancher142.3`, `v0.15.0-ranch
 
 	- `git ls-remote --tags <remote> | grep v0.15.0-rancher<NEW-VERSION>`
 
+## Fork quality checks
+
+In `ioplane/rancher-machine`, `.github/workflows/fork-blacksmith.yml` runs the
+candidate's `make dev-build lint-build` and `make check` on Blacksmith using
+rootless Podman. The candidate must declare these targets; missing targets fail
+the check. `pull_request_target` accepts only open pull requests whose head and
+base repositories are this fork. Manual dispatch requires a pull request number.
+The workflow resolves and checks out the exact head SHA with read-only permissions
+and no persisted checkout credentials, secrets, environments, or shared caches.
+A separate job checks that the pull request still has that head and writes the
+`Blacksmith / fork quality` commit status without checking out candidate code.
+
+The inherited Rancher test, release, FOSSA, and Renovate workflows are restricted
+to `rancher/machine`; they do not publish releases or request Rancher credentials
+from this fork. Fork CI activation requires this workflow on the default branch
+and available Blacksmith runners. No production infrastructure is provisioned.
 ## Development checks
 
 The pinned Podman lint image provides golangci-lint v2.15.0. `make check-format`
