@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Development lint uses pinned golangci-lint v2.15.0; one blocking gofumpt pass covers both recovery files and the existing three-file formatting scope.
+
 - Fork pull request titles and descriptions and new commit messages use English; commit titles retain declarative Conventional Commits.
 
 - Development toolchain pinned to Go 1.27.2 while retaining the inherited Go 1.26.0 module floor; the diagnostic RPC fallback log uses a constant format string for current vet checks.

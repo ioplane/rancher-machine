@@ -15,9 +15,7 @@ import (
 	"github.com/rancher/machine/libmachine/version"
 )
 
-var (
-	heartbeatInterval = 5 * time.Second
-)
+var heartbeatInterval = 5 * time.Second
 
 type RPCClientDriverFactory interface {
 	NewRPCClientDriver(driverName string, rawDriver []byte) (*RPCClientDriver, error)

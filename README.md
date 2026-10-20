@@ -84,3 +84,9 @@ Subsequent tags from that branch would be `v0.15.0-rancher142.3`, `v0.15.0-ranch
 - **Verify the tag is on the remote:**
 
 	- `git ls-remote --tags <remote> | grep v0.15.0-rancher<NEW-VERSION>`
+
+## Development checks
+
+The pinned Podman lint image provides golangci-lint v2.15.0. `make check-format`
+uses one blocking gofumpt pass for the recovery files and the existing three-file
+formatting scope; `make check-lint` retains the configured changed-code filter.
