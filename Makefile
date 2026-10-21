@@ -99,6 +99,7 @@ check-vet:
 	$(DEV_RUN) $(DEV_IMAGE) go vet ./...
 check-build:
 	$(DEV_RUN) $(DEV_IMAGE) env CGO_ENABLED=0 go build -trimpath -o bin/rancher-machine ./cmd/rancher-machine
+	$(DEV_RUN) $(DEV_IMAGE) go version -m bin/rancher-machine
 check-lint:
 	$(DEV_RUN) $(GIT_MOUNTS) $(LINT_IMAGE) golangci-lint run ./...
 check-format:

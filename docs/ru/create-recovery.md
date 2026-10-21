@@ -33,7 +33,7 @@ raw script и credentials в proof не сохраняются. Старый con
 ## Проверка
 
 `make dev-build lint-build check` выполняет проверки в Podman с закреплённым
-Go 1.27.2 и golangci-lint v2.14.0. Race-тесты ограничены критическими create/RPC/logger-тестами в commands,
+Go 1.27.3 и golangci-lint v2.15.0. Race-тесты ограничены критическими create/RPC/logger-тестами в commands,
 libmachine/drivers/rpc и libmachine/crashreport;
 vet/build/module integrity/vulnerability scan охватывают весь модуль. Линтер
 проверяет новые замечания относительно исходного commit
