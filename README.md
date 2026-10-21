@@ -103,6 +103,14 @@ from this fork. Fork CI activation requires this workflow on the default branch
 and available Blacksmith runners. No production infrastructure is provisioned.
 ## Development checks
 
+As of 2026-10-21, the development toolchain declarations select Go 1.27.3
+for [GO-2026-6809](https://pkg.go.dev/vuln/GO-2026-6809), retaining the Go 1.26.0
+module floor. `make check-build` logs the built binary's compiler and module
+metadata with `go version -m`. This source change does not fix the SUSE vendor
+release compiler in `package/Dockerfile`: that path remains affected and unfixed,
+with release acceptance blocked until a supported vendor fix and an actual build
+are verified, or a separate builder-channel migration is reviewed.
+
 The pinned Podman lint image provides golangci-lint v2.15.0. `make check-format`
 uses one blocking gofumpt pass for the recovery files and the existing three-file
 formatting scope; `make check-lint` retains the configured changed-code filter.

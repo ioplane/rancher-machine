@@ -22,4 +22,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+- Development toolchain declarations select Go 1.27.3 for GO-2026-6809 (CVE-2026-111943), retaining the Go 1.26.0 module floor; this source change does not fix the affected SUSE vendor release compiler in `package/Dockerfile`, whose release acceptance remains blocked.
+
 - `golang.org/x/net` v0.61.0 and its required companion modules resolve reachable HTTP/2 advisories GO-2026-6617, GO-2026-6612, GO-2026-6611, GO-2026-6610 and GO-2026-6603; the scanner remains blocking over the full module.
